@@ -48,6 +48,8 @@ namespace CurrencyTracker.Web.Controllers
 
                 string token = _tokenService.GetToken(user);
 
+                HttpContext.Session.SetString("token", token);
+
                 return Ok(new { token = token });
             }
             else

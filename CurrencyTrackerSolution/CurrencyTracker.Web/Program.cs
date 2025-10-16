@@ -17,7 +17,13 @@ builder.Services.AddCustomAuthenticationWithServices(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.IdleTimeout = TimeSpan.FromHours(2);
+});
 builder.Services.AddLogging();
 builder.Services.AddHttpClient();
 
@@ -43,15 +49,28 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseSession();
+
 app.UseRouting();
 
 app.UseStaticFiles();
 
+// Если пользователь авторизовался - токен будет добавляться в заголовок из сессий 
+app.Use(async (context, next) =>
+{
+    string? jwtToken = context.Session.GetString("token");
+
+    if (!string.IsNullOrEmpty(jwtToken))
+    {
+        context.Request.Headers.Append("Authorization", $"Bearer {jwtToken}");
+    }
+
+    await next();
+});
+
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.UseSession();
 
 if (app.Environment.IsDevelopment())
 {
