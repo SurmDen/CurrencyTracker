@@ -12,7 +12,7 @@ namespace CurrencyTracker.Domain.Entites
 
         public int Nominal { get; set; }
 
-        public DateTimeOffset Date { get; set; }
+        public DateTime Date { get; set; }
 
         public Valute Valute { get; set; }
 

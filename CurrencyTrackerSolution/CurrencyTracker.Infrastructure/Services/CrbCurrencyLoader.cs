@@ -1,5 +1,6 @@
 ﻿using CurrencyTracker.Application.DTOs;
 using CurrencyTracker.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,15 +13,20 @@ namespace CurrencyTracker.Infrastructure.Services
     public class CrbCurrencyLoader : ICurrencyLoader
     {
         private readonly ICurrencyRepository _currencyRepository;
+        private readonly ILogger<CrbCurrencyLoader> _logger;
 
-        public CrbCurrencyLoader(ICurrencyRepository currencyRepository)
+        public CrbCurrencyLoader(ICurrencyRepository currencyRepository, ILogger<CrbCurrencyLoader> logger)
         {
             _currencyRepository = currencyRepository;
+            _logger = logger;
         }
 
         // загружаем данные за daysCount дней начиная с сегодняшнего
         public async Task LoadCurrenciesAndSaveAsync(int daysCount)
         {
+            // Регистрируем провайдер кодировок
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             List<ValCursDTO> valCursList = new List<ValCursDTO>();
             HttpClient httpClient = new HttpClient();
 
@@ -36,7 +42,11 @@ namespace CurrencyTracker.Infrastructure.Services
 
                     if (response.IsSuccessStatusCode)
                     {
-                        var xmlContent = await response.Content.ReadAsStringAsync();
+                        var byteArray = await response.Content.ReadAsByteArrayAsync();
+                        var xmlContent = Encoding.GetEncoding("windows-1251").GetString(byteArray);
+
+                        xmlContent = xmlContent.Replace(",", ".");
+
                         var serializer = new XmlSerializer(typeof(ValCursDTO));
                         using var reader = new StringReader(xmlContent);
 
@@ -47,23 +57,26 @@ namespace CurrencyTracker.Infrastructure.Services
                     }
                     else
                     {
-                        Console.WriteLine($"Ошибка загрузки для даты {dateStr}: {response.StatusCode}");
+                        _logger.LogError($"Ошибка загрузки для даты {dateStr}: {response.StatusCode}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Ошибка при загрузке данных за {dateStr}: {ex.Message}");
+                    _logger.LogError(ex, $"Ошибка при загрузке данных за {dateStr}: {ex.Message}");
                 }
 
                 await Task.Delay(100);
             }
 
-            // var allValutes = valCursList
-            //    .SelectMany(vc => vc.Valutes)
-            //    .ToList();
-
-            // Сохраняем загруженные данные в БД
-            await _currencyRepository.LoadValutesWithCurrenciesAsync(valCursList);
+            if (valCursList.Any())
+            {
+                await _currencyRepository.LoadValutesWithCurrenciesAsync(valCursList);
+                _logger.LogInformation($"Сохранено: {valCursList.Count} дней, {valCursList.Sum(v => v.Valutes.Count)} курсов");
+            }
+            else
+            {
+                _logger.LogInformation("Не загружено ни одного дня данных");
+            }
         }
     }
 }

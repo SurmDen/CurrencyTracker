@@ -22,7 +22,7 @@ namespace CurrencyTracker.Infrastructure.Extentions
                 options.UseNpgsql(connectionString);
             });
 
-            services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+            services.AddTransient<ICurrencyRepository, CurrencyRepository>();
             services.AddSingleton<ICurrencyLoader, CrbCurrencyLoader>();
         }
 

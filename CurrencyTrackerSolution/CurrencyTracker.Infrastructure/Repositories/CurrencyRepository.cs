@@ -86,29 +86,29 @@ namespace CurrencyTracker.Infrastructure.Repositories
 
                 foreach (var valuteDto in valCurs.Valutes)
                 {
-                    var valute = await _context.Valutes
-                        .FirstOrDefaultAsync(v => v.ValuteName == valuteDto.Name);
+                    Valute? valute = await _context.Valutes
+                        .FirstOrDefaultAsync(v => v.ValuteName == valuteDto.CharCode);
 
                     if (valute == null)
                     {
                         valute = new Valute
                         {
-                            ValuteName = valuteDto.Name
+                            ValuteName = valuteDto.CharCode
                         };
+
                         _context.Valutes.Add(valute);
+                        await _context.SaveChangesAsync();
                     }
 
                     var existingCurrency = await _context.Currencies
-                        .Include(c => c.Valute)
                         .FirstOrDefaultAsync(c =>
-                            c.Valute.ValuteName == valuteDto.Name &&
+                            c.ValuteId == valute.Id &&
                             c.Date.Date == date.Date);
 
                     if (existingCurrency != null)
                     {
                         existingCurrency.Value = valuteDto.Value;
                         existingCurrency.Nominal = valuteDto.Nominal;
-                        _context.Currencies.Update(existingCurrency);
                     }
                     else
                     {
@@ -117,14 +117,14 @@ namespace CurrencyTracker.Infrastructure.Repositories
                             Value = valuteDto.Value,
                             Nominal = valuteDto.Nominal,
                             Date = date,
-                            Valute = valute
+                            ValuteId = valute.Id
                         };
                         _context.Currencies.Add(currency);
                     }
                 }
-            }
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

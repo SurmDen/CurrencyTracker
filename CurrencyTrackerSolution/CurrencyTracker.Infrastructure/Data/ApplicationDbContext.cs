@@ -1,23 +1,14 @@
 ﻿using CurrencyTracker.Domain.Entites;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CurrencyTracker.Infrastructure.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(IConfiguration configuration)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) 
         {
-            _configuration = configuration;
             Database.EnsureCreated();
         }
-
-        private readonly IConfiguration _configuration;
 
         public DbSet<Valute> Valutes { get; set; }
 
@@ -45,6 +36,9 @@ namespace CurrencyTracker.Infrastructure.Data
                     .WithMany(x => x.Currencies)
                     .HasForeignKey(x => x.ValuteId)
                     .OnDelete(DeleteBehavior.Cascade);
+                currencyOptions
+                    .Property(x => x.Date)
+                    .HasColumnType("date");
             });
 
             modelBuilder.Entity<User>(userOptions =>
@@ -53,6 +47,13 @@ namespace CurrencyTracker.Infrastructure.Data
                 userOptions.HasAlternateKey(x => x.Email);
                 userOptions.HasIndex(u => u.Email);
                 userOptions.ToTable("users");
+                userOptions.HasData(new User()
+                {
+                    Id = 1,
+                    FirstName = "Jeffry",
+                    LastName = "Rihter",
+                    Email = "user@gmail.com"
+                });
             });
         }
     }
