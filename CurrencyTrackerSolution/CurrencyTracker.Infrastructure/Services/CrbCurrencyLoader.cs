@@ -70,8 +70,15 @@ namespace CurrencyTracker.Infrastructure.Services
 
             if (valCursList.Any())
             {
-                await _currencyRepository.LoadValutesWithCurrenciesAsync(valCursList);
-                _logger.LogInformation($"Сохранено: {valCursList.Count} дней, {valCursList.Sum(v => v.Valutes.Count)} курсов");
+                try
+                {
+                    await _currencyRepository.LoadValutesWithCurrenciesAsync(valCursList);
+                    _logger.LogInformation($"Сохранено: {valCursList.Count} дней, {valCursList.Sum(v => v.Valutes.Count)} курсов");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Ошибка при добавлении курсов валют в БД");
+                }
             }
             else
             {

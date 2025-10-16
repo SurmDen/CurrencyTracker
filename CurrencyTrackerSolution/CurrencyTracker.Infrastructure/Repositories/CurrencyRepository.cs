@@ -3,6 +3,7 @@ using CurrencyTracker.Application.Interfaces;
 using CurrencyTracker.Domain.Entites;
 using CurrencyTracker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -14,13 +15,15 @@ namespace CurrencyTracker.Infrastructure.Repositories
 {
     public class CurrencyRepository : ICurrencyRepository
     {
-        public CurrencyRepository(ApplicationDbContext context)
+        public CurrencyRepository(ApplicationDbContext context, ILogger<CurrencyRepository> logger)
         {
             // Получаем контекст БД из DI
             _context = context;
+            _logger = logger;
         }
 
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<CurrencyRepository> _logger;
 
         // Далее реализуем интерфейс согласно ТЗ, подробности той или иной реализации расскажу на собеседовании (там все просто)
 
@@ -72,6 +75,7 @@ namespace CurrencyTracker.Infrastructure.Repositories
 
             if (currency == null)
             {
+                _logger.LogWarning($"Currency with valute name: {valuteName} was null");
                 throw new InvalidOperationException($"Currency with valute name: {valuteName} was null");
             }
 
@@ -80,50 +84,60 @@ namespace CurrencyTracker.Infrastructure.Repositories
 
         public async Task LoadValutesWithCurrenciesAsync(List<ValCursDTO> valCursList)
         {
-            foreach (var valCurs in valCursList)
+            try
             {
-                var date = DateTime.ParseExact(valCurs.Date, "dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-                foreach (var valuteDto in valCurs.Valutes)
+                foreach (var valCurs in valCursList)
                 {
-                    Valute? valute = await _context.Valutes
-                        .FirstOrDefaultAsync(v => v.ValuteName == valuteDto.CharCode);
+                    var date = DateTime.ParseExact(valCurs.Date, "dd.MM.yyyy", CultureInfo.InvariantCulture);
 
-                    if (valute == null)
+                    foreach (var valuteDto in valCurs.Valutes)
                     {
-                        valute = new Valute
+                        Valute? valute = await _context.Valutes
+                            .FirstOrDefaultAsync(v => v.ValuteName == valuteDto.CharCode);
+
+                        if (valute == null)
                         {
-                            ValuteName = valuteDto.CharCode
-                        };
+                            valute = new Valute
+                            {
+                                ValuteName = valuteDto.CharCode
+                            };
 
-                        _context.Valutes.Add(valute);
-                        await _context.SaveChangesAsync();
-                    }
+                            _context.Valutes.Add(valute);
+                            await _context.SaveChangesAsync();
+                        }
 
-                    var existingCurrency = await _context.Currencies
-                        .FirstOrDefaultAsync(c =>
-                            c.ValuteId == valute.Id &&
-                            c.Date.Date == date.Date);
+                        var existingCurrency = await _context.Currencies
+                            .FirstOrDefaultAsync(c =>
+                                c.ValuteId == valute.Id &&
+                                c.Date.Date == date.Date);
 
-                    if (existingCurrency != null)
-                    {
-                        existingCurrency.Value = valuteDto.Value;
-                        existingCurrency.Nominal = valuteDto.Nominal;
-                    }
-                    else
-                    {
-                        var currency = new Currency
+                        if (existingCurrency != null)
                         {
-                            Value = valuteDto.Value,
-                            Nominal = valuteDto.Nominal,
-                            Date = date,
-                            ValuteId = valute.Id
-                        };
-                        _context.Currencies.Add(currency);
+                            existingCurrency.Value = valuteDto.Value;
+                            existingCurrency.Nominal = valuteDto.Nominal;
+                        }
+                        else
+                        {
+                            var currency = new Currency
+                            {
+                                Value = valuteDto.Value,
+                                Nominal = valuteDto.Nominal,
+                                Date = date,
+                                ValuteId = valute.Id
+                            };
+                            _context.Currencies.Add(currency);
+                        }
                     }
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Данные успешно добавлены в БД");
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка добавления курсов валют в БД");
 
-                await _context.SaveChangesAsync();
+                throw;
             }
         }
     }
