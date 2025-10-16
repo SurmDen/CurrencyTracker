@@ -22,8 +22,7 @@ namespace CurrencyTracker.Infrastructure.Extentions
                 options.UseNpgsql(connectionString);
             });
 
-            services.AddTransient<ICurrencyRepository, CurrencyRepository>();
-            services.AddSingleton<ICurrencyLoader, CrbCurrencyLoader>();
+            services.AddTransient<ICurrencyRepository, CurrencyRepository>(); 
         }
 
         public static void AddCustomAuthenticationWithServices(this IServiceCollection services, IConfiguration configuration)
@@ -43,6 +42,15 @@ namespace CurrencyTracker.Infrastructure.Extentions
                             Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
                     };
                 });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Bearer", policy =>
+                {
+                    policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                });
+            });
 
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<ITokenService, JwtTokenService>();

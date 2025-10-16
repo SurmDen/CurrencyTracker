@@ -1,0 +1,16 @@
+﻿body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+#qrcode {
+    margin: 20px 0;
+}
+
+#url {
+    word-break: break-all;
+    color: #666;
+}

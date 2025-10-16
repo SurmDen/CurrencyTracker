@@ -73,6 +73,8 @@ namespace CurrencyTracker.Infrastructure.Repositories
                 .OrderByDescending(c => c.Date)
                 .FirstOrDefaultAsync(c => c.Valute.ValuteName == valuteName);
 
+            currency.Valute.Currencies = null;
+
             if (currency == null)
             {
                 _logger.LogWarning($"Currency with valute name: {valuteName} was null");

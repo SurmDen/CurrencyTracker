@@ -1,5 +1,6 @@
 ﻿using CurrencyTracker.Application.Interfaces;
 using CurrencyTracker.Infrastructure.Extentions;
+using CurrencyTracker.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ services.AddLogging(options =>
     options.AddConsole();
 });
 services.AddHttpClient();
+services.AddSingleton<ICurrencyLoader, CrbCurrencyLoader>();
 
 IServiceProvider provider = services.BuildServiceProvider();
 

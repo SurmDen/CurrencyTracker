@@ -52,7 +52,8 @@ namespace CurrencyTracker.Infrastructure.Data
                     Id = 1,
                     FirstName = "Jeffry",
                     LastName = "Rihter",
-                    Email = "user@gmail.com"
+                    Email = "user@gmail.com",
+                    Password = "123456"
                 });
             });
         }

@@ -56,11 +56,6 @@ namespace CurrencyTracker.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == signInDTO.Email && u.Password == signInDTO.Password);
 
-            if (user == null)
-            {
-                throw new InvalidOperationException("User with sign in parameters not found");
-            }
-
             return user;
         }
     }
