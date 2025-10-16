@@ -56,7 +56,7 @@ Currency Tracker - это комплексное .NET решение, котор
 1. **Клонируйте репозиторий**
 ```
    git clone https://github.com/SurmDen/CurrencyTracker.git
-   cd currency-tracker
+   cd /CurrencyTracker/CurrencyTrackerSolution
 ```
 
 2. **Настройте подключение к базе данных**
