@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.Parent?.FullName)
+var solutionRoot = FindSolutionRoot();
+
+IConfiguration configuration = new ConfigurationBuilder()
+    .SetBasePath(solutionRoot)
     .AddJsonFile("appsettings.json")
     .Build();
 
@@ -50,3 +52,21 @@ while (true)
 }
 
 Console.ReadKey();
+
+// Ищем файл конфигураций пока не найдем
+static string FindSolutionRoot(string currentPath = null)
+{
+    currentPath ??= Directory.GetCurrentDirectory();
+    var directory = new DirectoryInfo(currentPath);
+
+    while (directory != null)
+    {
+        if (directory.GetFiles("*.sln").Any() || directory.GetFiles("appsettings.json").Any())
+        {
+            return directory.FullName;
+        }
+        directory = directory.Parent;
+    }
+
+    throw new DirectoryNotFoundException("Не удалось найти корень решения");
+}
