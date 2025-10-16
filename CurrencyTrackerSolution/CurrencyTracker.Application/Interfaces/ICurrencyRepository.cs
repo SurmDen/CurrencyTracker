@@ -10,10 +10,13 @@ namespace CurrencyTracker.Application.Interfaces
 {
     public interface ICurrencyRepository
     {
-        public Task<List<Valute>> GetValutesWithCurrenciesAsync();
+        // Получаем валюты с курсами (с возможностью фильтрации по дате и названию валюты)
+        public Task<List<Valute>> GetValutesWithCurrenciesAsync(string? valuteName = null, DateTime? date = null);
 
-        public Task<Currency> GetValuteWithLatestCurrencyAsync(long id);
+        // Получаем последний курс валюты
+        public Task<Currency> GetLatestCurrencyAsync(string valuteName);
 
+        // Загружаем валюты с курсами из API цунтробанка в БД
         public Task LoadValutesWithCurrenciesAsync(List<ValCursDTO> valutes);
     }
 }
