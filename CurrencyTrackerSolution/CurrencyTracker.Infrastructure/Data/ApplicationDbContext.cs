@@ -23,6 +23,8 @@ namespace CurrencyTracker.Infrastructure.Data
 
         public DbSet<Currency> Currencies { get; set; }
 
+        public DbSet<User> Users { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Valute>(valuteOptions =>
@@ -43,6 +45,14 @@ namespace CurrencyTracker.Infrastructure.Data
                     .WithMany(x => x.Currencies)
                     .HasForeignKey(x => x.ValuteId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<User>(userOptions =>
+            {
+                userOptions.HasKey(x => x.Id);
+                userOptions.HasAlternateKey(x => x.Email);
+                userOptions.HasIndex(u => u.Email);
+                userOptions.ToTable("users");
             });
         }
     }
